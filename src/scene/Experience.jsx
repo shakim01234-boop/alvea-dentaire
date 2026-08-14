@@ -184,6 +184,24 @@ function HeroTooth() {
     if (mat && mat.thickness !== undefined) {
       const glow = window4(p, 0.85, 0.93, 0.97, 1.0)
       mat.thickness = THREE.MathUtils.damp(mat.thickness, 0.85 + glow * 1.6, 4, dt)
+
+      // La transmission est coupée pendant qu'elle fait partie de l'arcade.
+      //
+      // Deux matériaux transmissifs ne se voient pas l'un l'autre : three.js
+      // ne place que les objets opaques dans le tampon de transmission. La
+      // gouttière, qui est du verre, effaçait donc purement et simplement cette
+      // dent-ci — la seule autre transmissive de la scène. Une dent manquante,
+      // toujours la même, exactement là où la coque la recouvre.
+      //
+      // Elle n'a de toute façon besoin de translucidité qu'en gros plan : au
+      // milieu de l'arcade elle est vue de loin, et on économise une passe.
+      const inArch = range(p, 0.34, 0.46) * (1 - range(p, 0.84, 0.9))
+      const base = THREE.MathUtils.lerp(
+        THEMES.dark.enamel.transmission,
+        THEMES.light.enamel.transmission,
+        themeState.mix,
+      )
+      mat.transmission = base * (1 - inArch)
     }
   })
 
