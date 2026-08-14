@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "models": "node scripts/optimize-models.mjs",
+    "deploy": "npm run build && node scripts/deploy-pages.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

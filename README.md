@@ -3,12 +3,25 @@
 Cabinet **fictif**. Maquette de démonstration : aucune information n'est réelle,
 et le formulaire de rendez-vous est volontairement inactif.
 
+**En ligne :** https://shakim01234-boop.github.io/alvea-dentaire/
+
 ```bash
 npm install
 npm run dev      # http://localhost:5370
 npm run build
 npm run models   # optimise les GLB déposés dans public/models/source/
+npm run deploy   # construit et publie sur GitHub Pages
 ```
+
+La publication passe par la branche `gh-pages` et non par GitHub Actions : le
+jeton disponible sur ce poste n'a pas la portée `workflow` et ne peut donc pas
+déposer de fichier dans `.github/workflows/`. Publier depuis une branche ne
+demande que `repo`.
+
+Le `base` de Vite vaut `/alvea-dentaire/` en production. Tous les chemins
+statiques passent par `lib/asset.js` — un chemin absolu écrit en dur pointerait
+vers la racine du domaine et renverrait 404 sans erreur visible, juste des
+cadres vides.
 
 ---
 
