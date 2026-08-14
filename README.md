@@ -141,9 +141,37 @@ que la caméra**, pas par un observateur d'intersection : le texte et le
 mouvement respirent sur la même horloge. Dans l'éditorial, où il n'y a pas de
 séquence, l'observateur reprend la main.
 
+Le titre d'ouverture, seul, ajoute un décalage **mot à mot à l'intérieur du
+masque de ligne** : c'est le plus grand corps du site, il supporte cette
+granularité que les autres titres n'accepteraient pas. L'espace entre les mots
+est une vraie espace et non une marge — une marge gauche se transformerait en
+indentation dès que la ligne se replie.
+
 S'y ajoutent le trait du sur-titre qui se dessine, les chiffres qui défilent
 jusqu'à leur valeur, le soulignement de navigation qui balaie, et le remplissage
 de bouton qui monte par le bas.
+
+## Typographie française
+
+Les textes sont écrits au kilomètre dans les fichiers source, avec apostrophes
+droites et espaces ordinaires. Les règles françaises sont appliquées à
+l'affichage par `lib/typo.js` : apostrophe courbe, espace fine insécable avant
+`: ; ! ?` et dans les guillemets, insécable entre un nombre et son unité pour
+qu'un prix ne se coupe jamais en fin de ligne.
+
+Écrire directement les caractères composés dans les sources serait invisible à
+la relecture et impossible à maintenir ; les appliquer au rendu garde le contenu
+lisible et la composition juste.
+
+## Navigation
+
+Les ancres passent par Lenis. Sans ça, le saut natif du navigateur se dispute le
+défilement avec l'interpolation en cours et l'atterrissage est sale.
+
+La barre s'efface en descendant et revient en remontant : sur une page dont le
+sujet est une séquence plein écran, un bandeau permanent mange l'image. Sous
+820 px, les liens passent dans un volet plein écran — auparavant ils
+disparaissaient purement et simplement.
 
 ## Décisions techniques
 

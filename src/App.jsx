@@ -1,10 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import Editorial from './site/Editorial.jsx'
+import Nav, { Rail } from './site/Nav.jsx'
 import { LineReveal, WordReveal } from './site/Reveal.jsx'
 import { ACTS, actWindow } from './lib/acts.jsx'
 import { destroyScroll, initScroll, useScrollProgress } from './lib/scroll'
 import { useReveal } from './lib/useReveal'
 import { applyTheme, DEFAULT_THEME } from './lib/theme'
+import { typo } from './lib/typo'
 
 // three.js, drei et la pile d'effets pèsent l'essentiel du bundle. En les
 // chargeant à part, le texte s'affiche sans attendre le moteur 3D.
@@ -23,7 +25,6 @@ export default function App() {
   useEffect(() => {
     initScroll()
     applyTheme(theme)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     // Laisse le temps à la première image 3D d'être calculée avant de lever le
     // voile : on ne montre jamais un canvas vide.
     const t = setTimeout(() => setBooted(true), 1500)
@@ -31,6 +32,7 @@ export default function App() {
       clearTimeout(t)
       destroyScroll()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Apparition des blocs (cartes, lignes de tarifs, chiffres) — les textes,
@@ -60,34 +62,8 @@ export default function App() {
         <Experience theme={theme} />
       </Suspense>
 
-      <header className="nav">
-        <a href="#top" className="wordmark">
-          Alvé<span className="accent">a</span>
-        </a>
-        <nav className="nav-links">
-          <a href="#cabinet">Le cabinet</a>
-          <a href="#equipe">L'équipe</a>
-          <a href="#soins">Soins et honoraires</a>
-          <a href="#rendez-vous" className="nav-cta">
-            Rendez-vous
-          </a>
-          <button
-            type="button"
-            className="theme-toggle"
-            onClick={toggleTheme}
-            aria-pressed={theme === 'dark'}
-            aria-label={theme === 'light' ? 'Passer en ambiance sombre' : 'Passer en ambiance claire'}
-            title={theme === 'light' ? 'Ambiance sombre' : 'Ambiance claire'}
-          >
-            <span className="theme-toggle-track">
-              <span className="theme-toggle-knob" />
-            </span>
-            <span className="theme-toggle-label">{theme === 'light' ? 'Clair' : 'Sombre'}</span>
-          </button>
-        </nav>
-      </header>
-
-      <Rail progress={progress} />
+      <Nav theme={theme} onToggleTheme={toggleTheme} />
+      <Rail acts={ACTS} progress={progress} />
 
       <main id="top">
         <div id="experience">
@@ -95,14 +71,23 @@ export default function App() {
             const [from, to] = actWindow(i)
             const on = progress >= from && progress <= to
             return (
-              <section className="act" key={act.id} id={act.id} data-align={act.align}>
+              <section
+                className="act"
+                key={act.id}
+                id={act.id}
+                data-align={act.align}
+                data-hero={act.hero ? '' : undefined}
+              >
                 <div className="act-body" data-state={on ? 'in' : 'out'}>
-                  <span className="kicker">{act.kicker}</span>
+                  <span className="kicker">{typo(act.kicker)}</span>
                   <LineReveal
                     as={act.hero ? 'h1' : 'h2'}
                     lines={act.title}
                     active={on}
                     delay={0.06}
+                    // Le titre d'ouverture est le plus grand corps du site :
+                    // il supporte — et mérite — un décalage mot à mot.
+                    perWord={act.hero}
                   />
                   <WordReveal text={act.body} active={on} delay={0.28} />
                 </div>
@@ -115,22 +100,5 @@ export default function App() {
         <Editorial />
       </main>
     </>
-  )
-}
-
-/** Chapitrage discret : indique où l'on se trouve dans la séquence. */
-function Rail({ progress }) {
-  const index = Math.min(ACTS.length - 1, Math.floor(progress * ACTS.length))
-  const hidden = progress >= 0.999
-
-  return (
-    <div className="rail" data-hidden={hidden}>
-      {ACTS.map((act, i) => (
-        <a className="rail-item" data-on={i === index} href={`#${act.id}`} key={act.id}>
-          <span>{act.rail}</span>
-          <span className="rail-tick" />
-        </a>
-      ))}
-    </div>
   )
 }

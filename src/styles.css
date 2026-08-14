@@ -123,6 +123,30 @@ a {
   transition-duration: 0.75s;
 }
 
+/* Variante mot à mot, dans le masque de ligne : le décalage se fait alors sur
+   les mots et non sur le bloc, qui reste immobile. */
+.reveal-lines--words .line-i {
+  transform: none !important;
+  transition: none;
+}
+
+.reveal-lines--words .lw {
+  display: inline-block;
+  transform: translate3d(0, 118%, 0);
+  transition: transform 1.15s var(--ease);
+  will-change: transform;
+}
+
+
+.reveal-lines--words[data-state='in'] .lw {
+  transform: none;
+}
+
+.reveal-lines--words[data-state='out'] .lw {
+  transform: translate3d(0, -118%, 0);
+  transition-duration: 0.75s;
+}
+
 /* Paragraphes : mot à mot, sans masque — on ne connaît pas les lignes. */
 .reveal-words .w {
   display: inline-block;
@@ -194,13 +218,23 @@ a {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 40;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1.4rem var(--gutter);
   color: var(--fg);
+  transition:
+    transform 0.7s var(--ease),
+    opacity 0.5s var(--ease);
+}
+
+/* La barre s'efface en descendant, revient en remontant : sur une page dont le
+   sujet est une séquence plein écran, un bandeau permanent mange l'image. */
+.nav[data-hidden='true'] {
+  transform: translateY(-110%);
+  opacity: 0;
 }
 
 .wordmark {
@@ -248,10 +282,118 @@ a {
   transform-origin: left;
 }
 
+/* Bouton du volet mobile : deux traits qui deviennent une croix. */
+
+.burger {
+  display: none;
+  position: relative;
+  width: 26px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.burger span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: currentColor;
+  transition:
+    transform 0.55s var(--ease),
+    opacity 0.35s var(--ease);
+}
+
+.burger span:first-child {
+  top: 4px;
+}
+
+.burger span:last-child {
+  bottom: 4px;
+}
+
+.burger[aria-expanded='true'] span:first-child {
+  transform: translateY(3.5px) rotate(45deg);
+}
+
+.burger[aria-expanded='true'] span:last-child {
+  transform: translateY(-3.5px) rotate(-45deg);
+}
+
 @media (max-width: 820px) {
   .nav-links a:not(.nav-cta) {
     display: none;
   }
+  .burger {
+    display: block;
+  }
+}
+
+/* Volet plein écran */
+
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+  padding: 6rem var(--gutter) 3rem;
+  opacity: 0;
+  pointer-events: none;
+  clip-path: inset(0 0 100% 0);
+  transition:
+    clip-path 0.8s var(--ease),
+    opacity 0.4s var(--ease);
+}
+
+.menu[data-open='true'] {
+  opacity: 1;
+  pointer-events: auto;
+  clip-path: inset(0 0 0 0);
+}
+
+.menu nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.menu a {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  font-family: var(--serif);
+  font-size: clamp(2rem, 9vw, 3.2rem);
+  line-height: 1.2;
+  text-decoration: none;
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+}
+
+.menu[data-open='true'] a {
+  opacity: 1;
+  transform: none;
+}
+
+.menu-index {
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+}
+
+.menu-foot {
+  font-size: 0.8rem;
+  color: var(--faint);
 }
 
 /* Bascule d'ambiance */
@@ -459,6 +601,17 @@ a {
   max-width: 30rem;
 }
 
+/* Le titre d'ouverture est composé en très grand corps : dans une colonne de
+   30 rem, ses lignes écrites se replieraient toutes, et le découpage voulu
+   n'aurait plus aucun sens. */
+.act[data-hero] .act-body {
+  max-width: 42rem;
+}
+
+.act[data-hero] .reveal-words {
+  max-width: 30rem;
+}
+
 .act[data-align='center'] .act-body {
   max-width: 46rem;
 }
@@ -485,6 +638,18 @@ a {
   transition: transform 1s var(--ease) 0.15s;
 }
 
+/* En portrait, le sur-titre se replie déjà sur deux lignes : le filet
+   n'accompagne plus rien et se retrouve isolé en bout de première ligne. */
+@media (max-width: 720px) {
+  .kicker {
+    flex-wrap: wrap;
+    letter-spacing: 0.18em;
+  }
+  .kicker::after {
+    display: none;
+  }
+}
+
 .act-body[data-state='in'] .kicker::after,
 .kicker.reveal.in::after {
   transform: scaleX(1);
@@ -504,7 +669,7 @@ a {
 }
 
 .act h1 {
-  font-size: clamp(2.9rem, 7.5vw, 6.4rem);
+  font-size: clamp(2.7rem, 6vw, 5.2rem);
 }
 
 .act h2 {
@@ -1019,10 +1184,19 @@ footer {
  * Accessibilité
  * ---------------------------------------------------------------- */
 
+/* Focus clavier : visible partout, et jamais sur un simple clic souris. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .reveal-lines .line-i,
+  .reveal-lines--words .lw,
   .reveal-words .w,
+  .menu a,
   .act-body .kicker {
     opacity: 1 !important;
     transform: none !important;

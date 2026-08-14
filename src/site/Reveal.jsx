@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { typo } from '../lib/typo'
 
 /**
  * Apparitions de texte.
@@ -60,6 +61,10 @@ export function LineReveal({
   active,
   delay = 0,
   stagger = 0.09,
+  /** Décale aussi les mots à l'intérieur de chaque ligne. Réservé aux très
+   *  grands titres : c'est perceptible, donc vite excessif en petit corps. */
+  perWord = false,
+  wordStagger = 0.045,
   className = '',
   ...rest
 }) {
@@ -67,14 +72,35 @@ export function LineReveal({
   const state = useRevealState(ref, active)
 
   return (
-    <Tag ref={ref} className={`reveal-lines ${className}`.trim()} data-state={state} {...rest}>
+    <Tag
+      ref={ref}
+      className={`reveal-lines ${perWord ? 'reveal-lines--words' : ''} ${className}`.trim()}
+      data-state={state}
+      {...rest}
+    >
       {lines.map((line, i) => {
-        const text = typeof line === 'string' ? line : line.text
+        const text = typo(typeof line === 'string' ? line : line.text)
         const emphasised = typeof line === 'object' && line.em
+        const lineDelay = delay + i * stagger
+
+        // Le masque reste au niveau de la ligne : découper les mots à
+        // l'intérieur ajoute de la granularité sans casser la coupe du bloc.
+        // Une vraie espace entre les mots, et non une marge : une marge
+        // gauche se transforme en indentation dès que la ligne se replie,
+        // alors qu'une espace se supprime naturellement au retour à la ligne.
+        const content = perWord
+          ? text.split(' ').flatMap((w, j) => [
+              <span className="lw" key={j} style={{ transitionDelay: `${lineDelay + j * wordStagger}s` }}>
+                {w}
+              </span>,
+              ' ',
+            ])
+          : text
+
         return (
           <span className="line" key={i}>
-            <span className="line-i" style={{ transitionDelay: `${delay + i * stagger}s` }}>
-              {emphasised ? <em>{text}</em> : text}
+            <span className="line-i" style={{ transitionDelay: perWord ? '0s' : `${lineDelay}s` }}>
+              {emphasised ? <em>{content}</em> : content}
             </span>
           </span>
         )
@@ -94,7 +120,9 @@ export function WordReveal({
 }) {
   const ref = useRef(null)
   const state = useRevealState(ref, active)
-  const words = text.split(' ')
+  // Découpage sur l'espace ordinaire : les espaces fines insécables posées par
+  // `typo` restent donc solidaires de leur mot, comme il se doit.
+  const words = typo(text).split(' ')
 
   return (
     <Tag ref={ref} className={`reveal-words ${className}`.trim()} data-state={state} {...rest}>

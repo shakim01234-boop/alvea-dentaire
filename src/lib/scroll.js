@@ -62,6 +62,18 @@ export function destroyScroll() {
 }
 
 /**
+ * Défilement vers une ancre, confié à Lenis.
+ *
+ * Sans ça, un lien `#section` provoque un saut natif brutal : le navigateur
+ * repositionne la page d'un coup pendant que Lenis continue d'interpoler de son
+ * côté. Les deux se disputent le défilement et l'atterrissage est sale.
+ */
+export function scrollToTarget(target, options = {}) {
+  if (!lenis) return
+  lenis.scrollTo(target, { duration: 1.35, ...options })
+}
+
+/**
  * Version React de la progression, échantillonnée à ~15 Hz.
  * Réservée à l'habillage HTML (chapitrage, barre de progression) — surtout pas
  * à la scène 3D.

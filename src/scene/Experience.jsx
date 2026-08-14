@@ -604,6 +604,16 @@ function CameraRig() {
 
     current.lerp(look, 1 - Math.exp(-6 * dt))
     cam.lookAt(current)
+
+    // Respiration de l'objectif : la focale s'élargit très légèrement quand on
+    // défile vite, et revient au repos. Ça ne se voit pas, ça se sent — la
+    // séquence donne l'impression de répondre au geste plutôt que de le subir.
+    const speed = Math.min(1, Math.abs(scroll.velocity) / 45)
+    const targetFov = 35 + speed * 2.4
+    if (Math.abs(cam.fov - targetFov) > 0.01) {
+      cam.fov = THREE.MathUtils.damp(cam.fov, targetFov, 4, dt)
+      cam.updateProjectionMatrix()
+    }
   })
 
   return null

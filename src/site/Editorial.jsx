@@ -1,17 +1,23 @@
 import { useState } from 'react'
 import { Counter, LineReveal, WordReveal } from './Reveal.jsx'
 import { asset } from '../lib/asset'
+import { typo, typoDeep } from '../lib/typo'
 
-const FIGURES = [
+// typoDeep applique les règles typographiques françaises à toutes les chaînes
+// des jeux de données ci-dessous : apostrophes courbes, espaces fines
+// insécables, insécables entre nombre et unité. Le contenu reste écrit
+// simplement dans le fichier ; la composition est faite à l'affichage.
+
+const FIGURES = typoDeep([
   { value: '2400', label: 'Patients suivis au cabinet' },
   { value: '18', label: "Années d'exercice" },
   { value: '4', label: 'Praticiens, un seul dossier' },
   { value: '0', label: 'Soin réalisé au premier rendez-vous' },
-]
+])
 
 // `photo` pointe vers public/images/team/. Tant que le fichier est absent, la
 // carte affiche son cadre vide — comme pour les modèles 3D, rien ne casse.
-const PEOPLE = [
+const PEOPLE = typoDeep([
   {
     name: 'Dr Léa Fontenoy',
     role: 'Dentisterie restauratrice, occlusion',
@@ -36,7 +42,7 @@ const PEOPLE = [
     photo: '/images/team/prevot.jpg',
     note: 'Fabrique couronnes et facettes sur place. Il voit les patients : cela change la teinte finale.',
   },
-]
+])
 
 function Portrait({ src, alt }) {
   const [failed, setFailed] = useState(false)
@@ -48,7 +54,7 @@ function Portrait({ src, alt }) {
   )
 }
 
-const TARIFFS = [
+const TARIFFS = typoDeep([
   { name: 'Consultation et bilan complet', note: "Imagerie 3D et empreinte optique comprises", price: '60 €' },
   { name: 'Détartrage', note: 'Pris en charge par l’Assurance maladie', price: '60 €' },
   { name: 'Soin d’une carie (composite)', note: 'Selon la face et l’étendue', price: '90 – 140 €' },
@@ -56,9 +62,9 @@ const TARIFFS = [
   { name: 'Implant, pilier et couronne', note: 'Forfait complet, guide chirurgical inclus', price: '1 800 – 2 300 €' },
   { name: 'Traitement par gouttières', note: 'Durée moyenne de neuf mois, contrôles compris', price: '3 200 – 4 500 €' },
   { name: 'Éclaircissement au fauteuil', note: 'Avec gouttières d’entretien à domicile', price: '390 €' },
-]
+])
 
-const PLEDGES = [
+const PLEDGES = typoDeep([
   {
     title: 'Le devis avant le fauteuil',
     body: "Aucun acte au-delà de soixante-dix euros n'est engagé sans un devis écrit que vous avez emporté chez vous. Nous ne proposons rien pendant que vous êtes allongé.",
@@ -71,7 +77,7 @@ const PLEDGES = [
     title: 'Une douleur, une réponse',
     body: 'Un créneau est gardé libre chaque matin pour les urgences de nos patients. Vous appelez avant onze heures, vous êtes vu dans la journée.',
   },
-]
+])
 
 export default function Editorial() {
   return (
@@ -147,8 +153,9 @@ export default function Editorial() {
         </div>
 
         <p className="legal reveal">
-          Tarifs indicatifs 2026, remis par écrit avant tout soin. Un devis détaillé est obligatoire
-          au-delà de 70 € et engage le cabinet. Tiers payant appliqué sur la part obligatoire.
+          {typo(
+            'Tarifs indicatifs 2026, remis par écrit avant tout soin. Un devis détaillé est obligatoire au-delà de 70 € et engage le cabinet. Tiers payant appliqué sur la part obligatoire.',
+          )}
         </p>
       </section>
 
@@ -191,10 +198,10 @@ export default function Editorial() {
                 <dd>12 rue de Verneuil, 75007 Paris</dd>
                 <dd>Métro Rue du Bac, sortie Saint-Germain</dd>
                 <dt>Horaires</dt>
-                <dd>Du lundi au vendredi, 8 h 30 – 19 h</dd>
+                <dd>{typo('Du lundi au vendredi, 8 h 30 – 19 h')}</dd>
                 <dd>Samedi matin sur rendez-vous</dd>
                 <dt>Urgences patients</dt>
-                <dd>01 45 00 00 00 — appel avant 11 h, vu dans la journée</dd>
+                <dd>{typo('01 45 00 00 00 — appel avant 11 h, vu dans la journée')}</dd>
               </dl>
             </div>
 
@@ -256,8 +263,9 @@ function Form() {
         Demander un rendez-vous
       </button>
       <p className="form-note">
-        Formulaire inactif : ceci est une maquette. Sur le site réel, la demande partirait vers le
-        secrétariat et ne serait jamais une confirmation automatique.
+        {typo(
+          'Formulaire inactif : ceci est une maquette. Sur le site réel, la demande partirait vers le secrétariat et ne serait jamais une confirmation automatique.',
+        )}
       </p>
     </form>
   )
