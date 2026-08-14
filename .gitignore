@@ -1,0 +1,10 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.vite
+
+# Exports Meshy bruts : lourds, et jamais servis au navigateur.
+# Seules les versions optimisées de public/models/ sont versionnées.
+public/models/source/
