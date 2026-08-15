@@ -12,7 +12,10 @@ import { useEffect, useState } from 'react'
  * pas déclencher un rendu React à chaque pixel défilé.
  */
 export const scroll = {
+  /** 0 → 1 sur la seule hauteur de la séquence 3D */
   progress: 0,
+  /** 0 → 1 sur le plan d'ouverture vidéo qui précède la séquence */
+  intro: 0,
   velocity: 0,
   /** true tant que la séquence 3D est à l'écran (sert à couper le rendu GPU) */
   active: true,
@@ -36,13 +39,23 @@ export function initScroll() {
   const update = () => {
     const el = document.getElementById('experience')
     if (!el) return
-    const span = el.offsetHeight - window.innerHeight
     const y = window.scrollY || window.pageYOffset
-    scroll.progress = span > 0 ? Math.min(1, Math.max(0, y / span)) : 0
+
+    // La progression est mesurée à partir du haut de la séquence, et non du
+    // haut de la page : le plan d'ouverture vidéo la précède désormais, et un
+    // décalage ici décalerait toute la chorégraphie.
+    const start = el.offsetTop
+    const span = el.offsetHeight - window.innerHeight
+    scroll.progress = span > 0 ? Math.min(1, Math.max(0, (y - start) / span)) : 0
+
+    const introEl = document.getElementById('intro')
+    const introSpan = introEl ? introEl.offsetHeight - window.innerHeight : 0
+    scroll.intro = introSpan > 0 ? Math.min(1, Math.max(0, y / introSpan)) : 0
+
     scroll.velocity = lenis.velocity || 0
     // Marge d'un demi-écran : on garde le rendu allumé un peu au-delà pour
     // éviter un gel visible quand on remonte.
-    scroll.active = y < span + window.innerHeight * 0.5
+    scroll.active = y < start + span + window.innerHeight * 0.5
   }
 
   lenis.on('scroll', update)
@@ -82,6 +95,16 @@ export function useScrollProgress(sampleMs = 66) {
   const [p, setP] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setP(scroll.progress), sampleMs)
+    return () => clearInterval(id)
+  }, [sampleMs])
+  return p
+}
+
+/** Progression du plan d'ouverture, même échantillonnage. */
+export function useIntroProgress(sampleMs = 66) {
+  const [p, setP] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setP(scroll.intro), sampleMs)
     return () => clearInterval(id)
   }, [sampleMs])
   return p

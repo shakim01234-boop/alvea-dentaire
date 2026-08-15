@@ -28,8 +28,11 @@ export function typo(input) {
       // Guillemets français.
       .replace(/«\s*/g, `«${NARROW}`)
       .replace(/\s*»/g, `${NARROW}»`)
-      // Séparateur de milliers : 1 800 ne doit pas se couper.
-      .replace(/(\d)\s(?=\d{3}\b)/g, `$1${NARROW}`)
+      // Séparateur de milliers : insécable ordinaire, et non fine.
+      // La fine (U+202F) est la forme correcte, mais le serif du site n'en a
+      // pas le glyphe : elle se réduisait à rien et « 1 800 » s'affichait
+      // « 1800 ». Une espace un peu large vaut mieux qu'une espace absente.
+      .replace(/(\d)\s(?=\d{3}\b)/g, `$1${NBSP}`)
       // Nombre et unité.
       .replace(/(\d)\s*(€|%|h\b|min\b|mm\b|cm\b|m²)/g, `$1${NBSP}$2`)
       // Tiret demi-cadratin entouré d'insécables dans les fourchettes de prix.

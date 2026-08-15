@@ -25,6 +25,28 @@ cadres vides.
 
 ---
 
+## Le plan d'ouverture
+
+Le site s'ouvrait directement sur une dent, c'est-à-dire sur la technique, sans
+jamais dire pourquoi. Un plan vidéo le précède désormais — des gens qui rient,
+un visage apaisé, un verre qu'on lève — et pose l'enjeu avant la démonstration.
+
+Il est collant sur une hauteur et demie d'écran : en descendant, l'image
+s'agrandit et s'efface pour découvrir la scène 3D qui l'attend derrière. Aucune
+coupure entre les deux.
+
+Le fichier source est en **HEVC**, que ni Chrome ni Firefox ne lisent de façon
+fiable. Il est réencodé en H.264 à deux définitions (1600 et 960 px, 1,4 Mo et
+0,5 Mo), sans piste audio, avec une affiche pour le premier affichage :
+
+```bash
+ffmpeg -i source.mp4 -an -vf scale=1600:-2 -c:v libx264 -crf 25 -preset slow \
+  -pix_fmt yuv420p -movflags +faststart public/video/intro-1600.mp4
+```
+
+La lecture est coupée dès que le plan sort de l'écran : une vidéo qui tourne
+hors champ continue de décoder pour rien.
+
 ## Le principe
 
 Une seule scène 3D, fixe derrière toute la page. Le défilement ne fait pas
@@ -162,6 +184,17 @@ qu'un prix ne se coupe jamais en fin de ligne.
 Écrire directement les caractères composés dans les sources serait invisible à
 la relecture et impossible à maintenir ; les appliquer au rendu garde le contenu
 lisible et la composition juste.
+
+### Entrée dans le champ
+
+`lib/inview.js` remplace IntersectionObserver, qui s'est révélé imprévisible
+ici : certains éléments ne recevaient jamais la moindre entrée, y compris avec
+un observateur témoin posé à la main sur le même nœud. Un seul relevé pour toute
+la page, à 12 Hz — mesurer une quarantaine de rectangles douze fois par seconde
+ne coûte rien, c'est le nombre de boucles qui coûte, pas leur contenu.
+
+Sur une page pilotée par un défilement interpolé, mieux vaut une mesure dont on
+maîtrise l'horloge qu'un mécanisme dont on subit la sienne.
 
 ## Navigation
 

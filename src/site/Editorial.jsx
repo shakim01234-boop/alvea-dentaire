@@ -82,6 +82,18 @@ const PLEDGES = typoDeep([
 export default function Editorial() {
   return (
     <div className="editorial">
+      {/* Charnière. La séquence 3D s'arrêtait net et l'éditorial commençait
+          sans transition ; ce bloc assume le passage de la démonstration aux
+          informations pratiques au lieu de le subir. */}
+      <section className="hinge">
+        <LineReveal className="hinge-title" lines={['Voilà pour', 'la démonstration.']} />
+        <WordReveal
+          className="hinge-lede"
+          delay={0.3}
+          text="Ce qu'une animation ne dira jamais : combien ça coûte, combien de temps ça prend, et ce que nous refuserons de vous faire. C'est écrit plus bas."
+        />
+      </section>
+
       <section id="cabinet">
         <div className="section-head">
           <span className="kicker reveal">Le cabinet</span>

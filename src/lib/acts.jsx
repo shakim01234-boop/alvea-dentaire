@@ -12,12 +12,13 @@
 export const ACTS = [
   {
     id: 'ouverture',
-    rail: 'Ouverture',
+    rail: 'Le principe',
     align: 'left',
-    kicker: 'Alvéa — Cabinet dentaire, Paris 7e',
+    // Le titre de niveau 1 et la ligne de marque sont désormais portés par le
+    // plan d'ouverture vidéo : cet acte redevient un chapitre comme les autres.
+    kicker: '00 — Le principe',
     title: ["Une dent n'est pas", 'une pièce détachée.'],
     body: "Dentisterie restauratrice, implantologie et orthodontie de l'adulte. Douze praticiens et prothésistes sous le même toit, un seul plan de traitement.",
-    hero: true,
   },
   {
     id: 'diagnostic',

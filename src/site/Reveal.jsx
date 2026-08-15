@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { typo } from '../lib/typo'
+import { onEnterView } from '../lib/inview'
 
 /**
  * Apparitions de texte.
@@ -36,17 +37,7 @@ function useRevealState(ref, controlled) {
       setVisible(true)
       return undefined
     }
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true)
-          io.disconnect()
-        }
-      },
-      { threshold: 0.2, rootMargin: '0px 0px -8% 0px' },
-    )
-    io.observe(el)
-    return () => io.disconnect()
+    return onEnterView(el, () => setVisible(true))
   }, [ref, controlled])
 
   const on = controlled !== undefined ? controlled : visible
@@ -155,25 +146,19 @@ export function Counter({ value, duration = 1400, className = '' }) {
 
     let raf = 0
     let start = 0
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return
-        io.disconnect()
-        const step = (now) => {
-          if (!start) start = now
-          const t = Math.min(1, (now - start) / duration)
-          // Décélération franche : le chiffre file puis se pose.
-          const eased = 1 - Math.pow(1 - t, 4)
-          setShown(Math.round(target * eased))
-          if (t < 1) raf = requestAnimationFrame(step)
-        }
-        raf = requestAnimationFrame(step)
-      },
-      { threshold: 0.5 },
-    )
-    io.observe(el)
+    const stop = onEnterView(el, () => {
+      const step = (now) => {
+        if (!start) start = now
+        const t = Math.min(1, (now - start) / duration)
+        // Décélération franche : le chiffre file puis se pose.
+        const eased = 1 - Math.pow(1 - t, 4)
+        setShown(Math.round(target * eased))
+        if (t < 1) raf = requestAnimationFrame(step)
+      }
+      raf = requestAnimationFrame(step)
+    })
     return () => {
-      io.disconnect()
+      stop()
       cancelAnimationFrame(raf)
     }
   }, [target, duration])

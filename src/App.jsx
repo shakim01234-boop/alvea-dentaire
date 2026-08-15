@@ -1,9 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import Editorial from './site/Editorial.jsx'
+import Intro from './site/Intro.jsx'
 import Nav, { Rail } from './site/Nav.jsx'
 import { LineReveal, WordReveal } from './site/Reveal.jsx'
 import { ACTS, actWindow } from './lib/acts.jsx'
-import { destroyScroll, initScroll, useScrollProgress } from './lib/scroll'
+import { destroyScroll, initScroll, useIntroProgress, useScrollProgress } from './lib/scroll'
 import { useReveal } from './lib/useReveal'
 import { applyTheme, DEFAULT_THEME } from './lib/theme'
 import { typo } from './lib/typo'
@@ -21,6 +22,7 @@ export default function App() {
     return asked === 'dark' || asked === 'light' ? asked : DEFAULT_THEME
   })
   const progress = useScrollProgress()
+  const intro = useIntroProgress()
 
   useEffect(() => {
     initScroll()
@@ -63,9 +65,11 @@ export default function App() {
       </Suspense>
 
       <Nav theme={theme} onToggleTheme={toggleTheme} />
-      <Rail acts={ACTS} progress={progress} />
+      <Rail acts={ACTS} progress={progress} intro={intro} />
 
       <main id="top">
+        <Intro />
+
         <div id="experience">
           {ACTS.map((act, i) => {
             const [from, to] = actWindow(i)
@@ -76,22 +80,12 @@ export default function App() {
                 key={act.id}
                 id={act.id}
                 data-align={act.align}
-                data-hero={act.hero ? '' : undefined}
               >
                 <div className="act-body" data-state={on ? 'in' : 'out'}>
                   <span className="kicker">{typo(act.kicker)}</span>
-                  <LineReveal
-                    as={act.hero ? 'h1' : 'h2'}
-                    lines={act.title}
-                    active={on}
-                    delay={0.06}
-                    // Le titre d'ouverture est le plus grand corps du site :
-                    // il supporte — et mérite — un décalage mot à mot.
-                    perWord={act.hero}
-                  />
+                  <LineReveal as="h2" lines={act.title} active={on} delay={0.06} />
                   <WordReveal text={act.body} active={on} delay={0.28} />
                 </div>
-                {act.hero && <div className="hint">Faites défiler</div>}
               </section>
             )
           })}

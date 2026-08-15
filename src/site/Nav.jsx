@@ -134,9 +134,11 @@ function ThemeToggle({ theme, onToggle }) {
 }
 
 /** Rail de chapitrage, aligné sur les actes de la séquence. */
-export function Rail({ acts, progress }) {
+export function Rail({ acts, progress, intro = 1 }) {
   const index = Math.min(acts.length - 1, Math.floor(progress * acts.length))
-  const hidden = progress >= 0.999
+  // Masqué tant que le plan d'ouverture occupe l'écran : un chapitrage qui
+  // désigne un acte avant que la séquence ait commencé ne veut rien dire.
+  const hidden = progress >= 0.999 || intro < 0.85
 
   return (
     <div className="rail" data-hidden={hidden}>

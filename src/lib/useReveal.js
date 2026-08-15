@@ -1,33 +1,24 @@
 import { useEffect } from 'react'
+import { onEnterView } from './inview'
 
 /**
- * Apparition à l'entrée dans le champ, en CSS.
- * Un seul observateur pour toute la page, et on cesse d'observer un élément
- * dès qu'il est apparu : rien ne tourne en fond une fois la page lue.
+ * Apparition des blocs (cartes, chiffres, lignes de tarifs) à l'entrée dans le
+ * champ. Les textes, eux, ont leur propre traitement dans Reveal.jsx.
+ *
+ * Passe par le relevé partagé de `inview.js` plutôt que par
+ * IntersectionObserver, pour la même raison : une horloge que l'on maîtrise.
  */
 export function useReveal() {
   useEffect(() => {
-    const nodes = document.querySelectorAll('.reveal')
-    if (!nodes.length) return
+    const nodes = [...document.querySelectorAll('.reveal')]
+    if (!nodes.length) return undefined
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       nodes.forEach((n) => n.classList.add('in'))
-      return
+      return undefined
     }
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add('in')
-            io.unobserve(e.target)
-          }
-        }
-      },
-      { rootMargin: '0px 0px -12% 0px', threshold: 0.15 },
-    )
-
-    nodes.forEach((n) => io.observe(n))
-    return () => io.disconnect()
+    const stops = nodes.map((n) => onEnterView(n, () => n.classList.add('in')))
+    return () => stops.forEach((stop) => stop())
   }, [])
 }
