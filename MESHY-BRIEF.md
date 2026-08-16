@@ -88,20 +88,32 @@ unique, dent vue de face uniquement (on ne voit pas le dessus).
 
 ---
 
-## 2. `arch-upper.glb` ★★
+## 2. `arch-upper.glb` ★★★ — devenu le plus utile
 
-L'arcade complète, qui se compose autour de la molaire quand la caméra recule.
+**Mise à jour du 15 août.** La molaire réelle est en place, et c'est maintenant
+l'arcade qui est le maillon faible : une vraie dent entourée de quinze doublures
+procédurales, l'écart se voit. Une arcade réelle porterait **trois actes sur
+six** — « le plan », « orthodontie » et « esthétique » se jouent tous dessus.
+
+**Condition impérative : même source et même style que la molaire.** Deux
+factures de modélisation différentes dans la même arcade seraient pires que la
+situation actuelle.
 
 > **Prompt image :**
-> `complete human upper dental arch, sixteen teeth arranged in a horseshoe curve, teeth only with no gums and no jaw bone, viewed from below at a three-quarter angle showing both the chewing surfaces and the front teeth, plain flat light grey background, soft diffuse studio lighting, natural ivory enamel, dental anatomy model, sharp focus, no shadow, no specular highlight, no text, fully in frame and centered`
+> `complete human lower dental arch, sixteen teeth arranged in a horseshoe curve, teeth only with no gums and no jaw bone and no pink tissue, crowns pointing up and roots pointing down, viewed from above at a three-quarter angle showing both the chewing surfaces and the front teeth, plain flat light grey background, soft diffuse studio lighting, natural ivory enamel, dental anatomy model, sharp focus, no shadow, no specular highlight, no text, fully in frame and centered`
 
-⚠️ **Le piège :** Meshy ajoute presque toujours une **gencive rose et un os de
-mâchoire**. Ça alourdit l'objet et ça rend l'image médicalement anxiogène — on
-perd tout le côté épuré. Insiste : `teeth only`, `no gums`, `no jaw bone`, `no pink tissue`.
-Si la gencive revient malgré tout, relance plutôt que de garder.
+⚠️ **Le piège :** le générateur ajoute presque toujours une **gencive rose et un
+os de mâchoire**. Ça alourdit l'objet et rend l'image médicalement anxiogène — on
+perd tout l'épuré. Insiste : `teeth only`, `no gums`, `no jaw bone`,
+`no pink tissue`. Si la gencive revient, relance plutôt que de garder.
 
 **Second piège :** une arcade vue strictement de face ne montre aucune surface de
-mastication → l'IA improvise le dessus des molaires. Il faut l'angle en contre-plongée.
+mastication, et le générateur improvise le dessus des molaires. Il faut l'angle
+en plongée.
+
+**Ne perds pas de temps sur les textures.** Comme pour la molaire, je ne garde
+que la géométrie — couleur, normales et rugosité sont recalculées par le site.
+Budget large : jusqu'à 45 000 triangles, je redescends au besoin.
 
 ---
 

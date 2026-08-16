@@ -14,20 +14,18 @@ import { THEMES, themeState } from '../lib/theme'
  * ------------------------------------------------------------------ */
 
 /**
- * La dent héros ne rejoint plus l'arcade : elle sort par le haut pendant que
- * celle-ci se compose, puis revient pour le plan final.
+ * La dent héros ouvre la séquence, puis sort par le haut pendant que l'arcade
+ * se compose. Elle ne revient pas.
  *
- * Le maillage réel et les doublures procédurales n'ont pas la même proportion
- * couronne/racine. Mis côte à côte, l'un lisait toujours comme une greffe :
- * trop grand à hauteur totale égale, la couronne minuscule à hauteur de
- * couronne égale. Plutôt que de chercher un compromis qui ne satisfaisait ni
- * l'un ni l'autre, on garde le modèle réel là où il est irremplaçable — les
- * deux gros plans — et l'arcade reste homogène.
+ * Elle a d'abord rejoint l'arcade, puis y est revenue pour le plan final :
+ * dans les deux cas elle se voyait comme une pièce rapportée, posée au milieu
+ * des autres. Le maillage réel et les doublures n'ont ni la même densité ni la
+ * même proportion couronne/racine — aucun réglage ne les réconcilie.
  *
- * Bénéfice de récit : la séquence s'ouvre et se referme sur la même dent.
+ * Le plan final se joue donc sur les incisives, ce qui tombe juste : le
+ * blanchiment et les facettes concernent le sourire, pas une molaire.
  */
 const HERO_OUT = [0.95, 3.8, 0.1]
-const HERO_FINALE = [0.15, 0.5, 1.25]
 // Emplacement de la molaire gauche : laissé vide, c'est là que l'implant se visse.
 const IMPLANT_SLOT = { position: [-1.279, 0, 0.066], yaw: -1.53 }
 // Position de repos de la dent héros : décalée à droite pour dégager la colonne
@@ -50,9 +48,10 @@ const CAMERA_KEYS = [
   { t: 0.6, pos: [-2.9, 1.3, 2.9], look: [-0.95, -0.05, 0.15] },
   { t: 0.68, pos: [-2.3, 2.3, 3.5], look: [-0.7, 0, 0.25] },
   { t: 0.78, pos: [0.1, 4.4, 2.9], look: [-0.5, 0, 0.3] },
-  // Plan final : la dent d'ouverture est revenue au centre de l'arcade.
-  { t: 0.88, pos: [0.35, 1.15, 4.5], look: [0.15, 0.5, 1.2] },
-  { t: 1.0, pos: [0.25, 2.4, 6.2], look: [0.1, 0.2, 0.7] },
+  // Acte esthétique : gros plan sur les incisives — c'est là que se joue le
+  // sourire, et donc le blanchiment et les facettes.
+  { t: 0.88, pos: [0.2, 1.0, 4.65], look: [0, 0.05, 1.5] },
+  { t: 1.0, pos: [0.2, 2.6, 6.4], look: [0, 0, 0.6] },
 ]
 
 const tmpA = new THREE.Vector3()
@@ -173,31 +172,18 @@ function HeroTooth() {
 
     // 0 → 0.28   : seule, en lévitation.
     // 0.28 → 0.44 : elle s'élève et sort du cadre, l'arcade se compose.
-    // 0.80 → 0.90 : elle redescend au centre pour le plan final.
     const away = range(p, 0.28, 0.44)
-    // Retour calé après le départ de la gouttière : deux matériaux transmissifs
-    // ne se voient pas l'un l'autre, il ne faut pas qu'ils se croisent.
-    const back = range(p, 0.84, 0.92)
     const now = performance.now()
 
-    g.visible = away < 0.999 || back > 0.001
+    g.visible = away < 0.999
     if (!g.visible) return
 
-    if (back < 0.001) {
-      g.position.lerpVectors(
-        tmpA.set(HERO_REST[0], HERO_REST[1] + Math.sin(now * 0.0004) * 0.035, HERO_REST[2]),
-        tmpB.set(...HERO_OUT),
-        away,
-      )
-      g.scale.setScalar(THREE.MathUtils.lerp(1, 0.35, away))
-    } else {
-      g.position.lerpVectors(
-        tmpA.set(HERO_FINALE[0], HERO_FINALE[1] + 3.3, HERO_FINALE[2]),
-        tmpB.set(HERO_FINALE[0], HERO_FINALE[1] + Math.sin(now * 0.0004) * 0.03, HERO_FINALE[2]),
-        back,
-      )
-      g.scale.setScalar(THREE.MathUtils.lerp(0.35, 0.52, back))
-    }
+    g.position.lerpVectors(
+      tmpA.set(HERO_REST[0], HERO_REST[1] + Math.sin(now * 0.0004) * 0.035, HERO_REST[2]),
+      tmpB.set(...HERO_OUT),
+      away,
+    )
+    g.scale.setScalar(THREE.MathUtils.lerp(1, 0.35, away))
 
     g.rotation.y = p * 3.4 + now * 0.00006
     // Inclinaison marquée : c'est ce qui donne à voir la face occlusale — les
@@ -539,7 +525,8 @@ function Stage({ themeName }) {
     if (sweep.current) {
       const on = range(p, 0.84, 0.9)
       sweep.current.intensity = on * THREE.MathUtils.lerp(D.sweep.intensity, L.sweep.intensity, m)
-      sweep.current.position.set(-2.4 + range(p, 0.85, 1.0) * 4.8, 1.2, 1.3)
+      // Le balayage passe devant les incisives, là où la caméra se pose.
+      sweep.current.position.set(-2.4 + range(p, 0.85, 1.0) * 4.8, 0.9, 2.7)
     }
     if (key.current) key.current.position.x = state.camera.position.x * 0.35 + 1.6
   })
