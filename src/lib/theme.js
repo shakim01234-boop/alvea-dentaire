@@ -57,7 +57,10 @@ export const THEMES = {
     env: { inner: '#cfc5b4', top: 2.6, warm: 1.6, cool: 1.2, ring: 0.9 },
     // Transmission réduite, pas augmentée : dans un environnement lumineux,
     // trop de transmission inonde la dent et efface tout son relief.
-    enamel: { color: '#fdfaf4', attenuation: '#cf9a5c', transmission: 0.34, roughness: 0.19 },
+    // Atténuation adoucie depuis l'arrivée du maillage réel : ses parois sont
+    // plus épaisses que celles de la doublure, le trajet optique est plus long,
+    // et une atténuation trop orangée virait franchement au rose.
+    enamel: { color: '#f9f3e8', attenuation: '#dcb68a', transmission: 0.3, roughness: 0.2 },
     enamelLight: { color: '#eee3d1', roughness: 0.3 },
     aligner: { color: '#f6fafd' },
     titanium: { color: '#8f949c', roughness: 0.22 },

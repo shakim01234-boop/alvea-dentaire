@@ -58,10 +58,15 @@ function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
     const root = scene.clone(true)
 
     if (materialProps) {
-      // Meshy livre une texture PBR qui rend la dent mate et crayeuse. On ne
-      // garde que la carte de normales — le relief mesuré — et on reconstruit
-      // l'émail en temps réel. C'est la matière qui porte le rendu, pas la
-      // texture d'origine.
+      // La matière du fichier est remplacée, mais ses deux cartes utiles sont
+      // reprises :
+      //   - les normales, qui portent tout le relief d'un maillage souvent
+      //     très léger — c'est elles qui font la différence en gros plan ;
+      //   - la couleur de base, qui apporte les variations d'un vrai modèle
+      //     (jaunissement au collet, usure) qu'aucune couleur unie ne donne.
+      // Le reste — métal, rugosité, transmission — est recalculé, sans quoi la
+      // dent rendrait comme du plastique ou, ici, comme du métal : le fichier
+      // arrivait avec un facteur métallique à 1.
       root.traverse((o) => {
         if (!o.isMesh) return
         const previous = o.material
@@ -69,6 +74,12 @@ function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
         if (previous?.normalMap) {
           next.normalMap = previous.normalMap
           next.normalScale = previous.normalScale?.clone() ?? new THREE.Vector2(1, 1)
+        }
+        if (previous?.map) {
+          next.map = previous.map
+          // La couleur de la matière devient un multiplicateur : elle doit
+          // rester proche du blanc pour ne pas assombrir la texture deux fois.
+          next.color.set('#ffffff')
         }
         o.material = next
       })

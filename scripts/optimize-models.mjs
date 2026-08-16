@@ -46,7 +46,11 @@ const OUT = join(ROOT, 'public', 'models')
 // Budget par asset. La dent héros est vue en très gros plan et garde donc plus
 // de triangles que l'arcade, qui n'est jamais montrée de près.
 const BUDGET = {
-  'tooth-molar': { triangles: 26000, texture: 2048 },
+  // Molaire : géométrie seule. Les textures livrées avec ce modèle ne valaient
+  // pas leur poids — une couleur de base en motif sable qui n'a rien d'un
+  // émail, et une carte de normales pratiquement plate. Le site rhabille de
+  // toute façon la dent avec sa propre matière et son propre micro-relief.
+  'tooth-molar': { triangles: 26000, texture: 1024, dropTextures: true },
   'arch-upper': { triangles: 45000, texture: 1024 },
   aligner: { triangles: 14000, texture: 512 },
   veneer: { triangles: 12000, texture: 1024 },
@@ -85,6 +89,20 @@ async function main() {
 
     const before = (await stat(inPath)).size
     const doc = await io.read(inPath)
+
+    // Le site réécrit entièrement la matière : il ne consomme que la couleur de
+    // base et les normales. Les cartes métal/rugosité, occlusion et émission
+    // sont donc du poids mort — souvent le tiers du fichier. On les retire ici
+    // pour que `prune` les supprime ensuite avec leurs images.
+    for (const mat of doc.getRoot().listMaterials()) {
+      mat.setMetallicRoughnessTexture(null)
+      mat.setOcclusionTexture(null)
+      mat.setEmissiveTexture(null)
+      if (budget.dropTextures) {
+        mat.setBaseColorTexture(null)
+        mat.setNormalTexture(null)
+      }
+    }
 
     const trianglesBefore = countTriangles(doc)
     const ratio = Math.min(1, budget.triangles / Math.max(1, trianglesBefore))

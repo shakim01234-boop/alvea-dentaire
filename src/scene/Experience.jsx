@@ -13,8 +13,21 @@ import { THEMES, themeState } from '../lib/theme'
  * Repères de scène
  * ------------------------------------------------------------------ */
 
-// Emplacement de la molaire droite : la dent héros vient s'y ranger.
-const HERO_SLOT = { position: [1.279, 0, 0.066], yaw: 1.53, scale: [0.5, 0.44, 0.5] }
+/**
+ * La dent héros ne rejoint plus l'arcade : elle sort par le haut pendant que
+ * celle-ci se compose, puis revient pour le plan final.
+ *
+ * Le maillage réel et les doublures procédurales n'ont pas la même proportion
+ * couronne/racine. Mis côte à côte, l'un lisait toujours comme une greffe :
+ * trop grand à hauteur totale égale, la couronne minuscule à hauteur de
+ * couronne égale. Plutôt que de chercher un compromis qui ne satisfaisait ni
+ * l'un ni l'autre, on garde le modèle réel là où il est irremplaçable — les
+ * deux gros plans — et l'arcade reste homogène.
+ *
+ * Bénéfice de récit : la séquence s'ouvre et se referme sur la même dent.
+ */
+const HERO_OUT = [0.95, 3.8, 0.1]
+const HERO_FINALE = [0.15, 0.5, 1.25]
 // Emplacement de la molaire gauche : laissé vide, c'est là que l'implant se visse.
 const IMPLANT_SLOT = { position: [-1.279, 0, 0.066], yaw: -1.53 }
 // Position de repos de la dent héros : décalée à droite pour dégager la colonne
@@ -37,8 +50,9 @@ const CAMERA_KEYS = [
   { t: 0.6, pos: [-2.9, 1.3, 2.9], look: [-0.95, -0.05, 0.15] },
   { t: 0.68, pos: [-2.3, 2.3, 3.5], look: [-0.7, 0, 0.25] },
   { t: 0.78, pos: [0.1, 4.4, 2.9], look: [-0.5, 0, 0.3] },
-  { t: 0.88, pos: [2.9, 1.35, 3.0], look: [1.28, 0.0, 0.07] },
-  { t: 1.0, pos: [0.2, 3.0, 5.8], look: [0, 0, 0.3] },
+  // Plan final : la dent d'ouverture est revenue au centre de l'arcade.
+  { t: 0.88, pos: [0.35, 1.15, 4.5], look: [0.15, 0.5, 1.2] },
+  { t: 1.0, pos: [0.25, 2.4, 6.2], look: [0.1, 0.2, 0.7] },
 ]
 
 const tmpA = new THREE.Vector3()
@@ -157,51 +171,45 @@ function HeroTooth() {
     if (!g) return
     const p = scroll.progress
 
-    // 0 → 0.28 : la dent est seule, en lévitation.
-    // 0.28 → 0.46 : elle rejoint sa place dans l'arcade.
-    const settle = range(p, 0.28, 0.46)
+    // 0 → 0.28   : seule, en lévitation.
+    // 0.28 → 0.44 : elle s'élève et sort du cadre, l'arcade se compose.
+    // 0.80 → 0.90 : elle redescend au centre pour le plan final.
+    const away = range(p, 0.28, 0.44)
+    // Retour calé après le départ de la gouttière : deux matériaux transmissifs
+    // ne se voient pas l'un l'autre, il ne faut pas qu'ils se croisent.
+    const back = range(p, 0.84, 0.92)
     const now = performance.now()
 
-    g.position.lerpVectors(
-      tmpA.set(HERO_REST[0], HERO_REST[1] + Math.sin(now * 0.0004) * 0.035, HERO_REST[2]),
-      tmpB.set(...HERO_SLOT.position),
-      settle,
-    )
-    g.rotation.y = THREE.MathUtils.lerp(p * 3.4 + now * 0.00006, HERO_SLOT.yaw, settle)
-    // Inclinaison marquée au repos : c'est ce qui donne à voir la face
-    // occlusale — les cuspides et les sillons — plutôt qu'un profil muet.
-    g.rotation.x = THREE.MathUtils.lerp(0.34 + Math.sin(p * 6) * 0.05, 0, settle)
+    g.visible = away < 0.999 || back > 0.001
+    if (!g.visible) return
 
-    g.scale.set(
-      THREE.MathUtils.lerp(1, HERO_SLOT.scale[0], settle),
-      THREE.MathUtils.lerp(1, HERO_SLOT.scale[1], settle),
-      THREE.MathUtils.lerp(1, HERO_SLOT.scale[2], settle),
-    )
+    if (back < 0.001) {
+      g.position.lerpVectors(
+        tmpA.set(HERO_REST[0], HERO_REST[1] + Math.sin(now * 0.0004) * 0.035, HERO_REST[2]),
+        tmpB.set(...HERO_OUT),
+        away,
+      )
+      g.scale.setScalar(THREE.MathUtils.lerp(1, 0.35, away))
+    } else {
+      g.position.lerpVectors(
+        tmpA.set(HERO_FINALE[0], HERO_FINALE[1] + 3.3, HERO_FINALE[2]),
+        tmpB.set(HERO_FINALE[0], HERO_FINALE[1] + Math.sin(now * 0.0004) * 0.03, HERO_FINALE[2]),
+        back,
+      )
+      g.scale.setScalar(THREE.MathUtils.lerp(0.35, 0.52, back))
+    }
+
+    g.rotation.y = p * 3.4 + now * 0.00006
+    // Inclinaison marquée : c'est ce qui donne à voir la face occlusale — les
+    // cuspides et les sillons — plutôt qu'un profil muet.
+    g.rotation.x = 0.34 + Math.sin(p * 6) * 0.05
 
     // Épaisseur optique animée : la dent s'allume de l'intérieur au gros plan.
     if (!material.current) material.current = findMaterial(g)
     const mat = material.current
     if (mat && mat.thickness !== undefined) {
-      const glow = window4(p, 0.85, 0.93, 0.97, 1.0)
+      const glow = window4(p, 0.9, 0.96, 0.99, 1.0)
       mat.thickness = THREE.MathUtils.damp(mat.thickness, 0.85 + glow * 1.6, 4, dt)
-
-      // La transmission est coupée pendant qu'elle fait partie de l'arcade.
-      //
-      // Deux matériaux transmissifs ne se voient pas l'un l'autre : three.js
-      // ne place que les objets opaques dans le tampon de transmission. La
-      // gouttière, qui est du verre, effaçait donc purement et simplement cette
-      // dent-ci — la seule autre transmissive de la scène. Une dent manquante,
-      // toujours la même, exactement là où la coque la recouvre.
-      //
-      // Elle n'a de toute façon besoin de translucidité qu'en gros plan : au
-      // milieu de l'arcade elle est vue de loin, et on économise une passe.
-      const inArch = range(p, 0.34, 0.46) * (1 - range(p, 0.84, 0.9))
-      const base = THREE.MathUtils.lerp(
-        THEMES.dark.enamel.transmission,
-        THEMES.light.enamel.transmission,
-        themeState.mix,
-      )
-      mat.transmission = base * (1 - inArch)
     }
   })
 
@@ -210,7 +218,11 @@ function HeroTooth() {
       <Model
         url="/models/tooth-molar.glb"
         materialProps={ENAMEL}
-        fitHeight={2.3}
+        // Compromis assumé : un modèle réel n'a pas la proportion
+        // couronne/racine de la doublure qu'il remplace. À hauteur totale égale
+        // il dépassait de l'arcade ; réduit à la hauteur de couronne, sa
+        // couronne devenait minuscule. On cale entre les deux.
+        fitHeight={2.2}
         fallback={
           <mesh geometry={geo}>
             <meshPhysicalMaterial {...ENAMEL} />
@@ -262,9 +274,9 @@ function Arch() {
     [],
   )
 
-  // On retire les deux premières molaires : la droite est jouée par la dent
-  // héros, la gauche reste vide pour recevoir l'implant.
-  const teeth = useMemo(() => archLayout().filter((t) => t.order !== 5), [])
+  // Seule la première molaire gauche manque : c'est l'emplacement que
+  // l'implant vient combler. L'arcade est complète partout ailleurs.
+  const teeth = useMemo(() => archLayout().filter((t) => t.key !== 'L5'), [])
 
   useFrame(() => {
     const g = group.current
@@ -505,7 +517,10 @@ function Stage({ themeName }) {
         const tag = mat?.userData?.themed
         if (!tag) return
         if (tag === 'enamel') {
-          mat.color.lerpColors(cA.set(D.enamel.color), cB.set(L.enamel.color), m)
+          // Avec une texture de couleur, la teinte du matériau est un simple
+          // multiplicateur : la faire varier salirait la texture au lieu de
+          // changer l'ambiance.
+          if (!mat.map) mat.color.lerpColors(cA.set(D.enamel.color), cB.set(L.enamel.color), m)
           mat.attenuationColor.lerpColors(cA.set(D.enamel.attenuation), cB.set(L.enamel.attenuation), m)
           mat.transmission = THREE.MathUtils.lerp(D.enamel.transmission, L.enamel.transmission, m)
           mat.roughness = THREE.MathUtils.lerp(D.enamel.roughness, L.enamel.roughness, m)
