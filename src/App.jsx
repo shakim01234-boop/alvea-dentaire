@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import Boundary from './site/Boundary.jsx'
 import Editorial from './site/Editorial.jsx'
 import Intro from './site/Intro.jsx'
 import Nav, { Rail } from './site/Nav.jsx'
@@ -60,9 +61,11 @@ export default function App() {
         </div>
       </div>
 
-      <Suspense fallback={null}>
-        <Experience theme={theme} />
-      </Suspense>
+      <Boundary label="scène 3D">
+        <Suspense fallback={null}>
+          <Experience theme={theme} />
+        </Suspense>
+      </Boundary>
 
       <Nav theme={theme} onToggleTheme={toggleTheme} />
       <Rail acts={ACTS} progress={progress} intro={intro} />

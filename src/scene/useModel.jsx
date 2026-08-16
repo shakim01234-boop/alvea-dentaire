@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, Suspense } from 'react'
+import { Component, useEffect, useState, useMemo, Suspense } from 'react'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
 import { asset } from '../lib/asset'
@@ -21,10 +21,17 @@ const probes = new Map()
 
 function probe(url) {
   if (probes.has(url)) return probes.get(url)
+
   // GET sur deux octets plutôt que HEAD : le serveur de développement répond
   // 404 aux HEAD sur les fichiers statiques, et un fichier bien présent était
   // alors déclaré absent.
-  const p = fetch(url, { headers: { Range: 'bytes=0-1' } })
+  //
+  // Le paramètre `?probe=1` est indispensable : sans lui, la sonde et le
+  // chargement réel partagent la même entrée de cache. En production, le
+  // serveur honore le Range, et la réponse partielle de deux octets était
+  // ensuite resservie au chargeur, qui recevait « gl » au lieu du fichier.
+  // `no-store` complète la ceinture.
+  const p = fetch(`${url}?probe=1`, { headers: { Range: 'bytes=0-1' }, cache: 'no-store' })
     .then((r) => {
       // Certains serveurs renvoient index.html pour un chemin inconnu :
       // un content-type HTML signifie « absent », pas « prêt ».
@@ -118,6 +125,34 @@ function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
  * @param {object} [materialProps] matière à appliquer à la place de celle du fichier
  * @param {number} [fitHeight]     hauteur cible, en unités de scène
  */
+/**
+ * Garde-fou.
+ *
+ * Sans lui, un seul fichier illisible faisait tomber tout l'arbre React et la
+ * page s'affichait blanche — le site entier perdu pour un modèle 3D de 88 ko.
+ * Une doublure procédurale attend derrière chaque modèle : c'est elle qui doit
+ * reprendre la main, silencieusement.
+ */
+class ModelBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { failed: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error) {
+    console.warn('[Alvéa] modèle 3D illisible, retour à la doublure procédurale :', error?.message)
+  }
+
+  render() {
+    if (this.state.failed) return this.props.fallback
+    return this.props.children
+  }
+}
+
 export function Model({ url, fallback, materialProps, fitHeight, onReady, ...props }) {
   // Résolu ici plutôt qu'à l'appel : les composants de scène gardent des
   // chemins lisibles, et le sous-chemin de déploiement reste un détail.
@@ -125,14 +160,16 @@ export function Model({ url, fallback, materialProps, fitHeight, onReady, ...pro
   const available = useModelAvailable(resolved)
   if (!available) return fallback
   return (
-    <Suspense fallback={fallback}>
-      <LoadedModel
-        url={resolved}
-        materialProps={materialProps}
-        fitHeight={fitHeight}
-        onReady={onReady}
-        {...props}
-      />
-    </Suspense>
+    <ModelBoundary fallback={fallback}>
+      <Suspense fallback={fallback}>
+        <LoadedModel
+          url={resolved}
+          materialProps={materialProps}
+          fitHeight={fitHeight}
+          onReady={onReady}
+          {...props}
+        />
+      </Suspense>
+    </ModelBoundary>
   )
 }
