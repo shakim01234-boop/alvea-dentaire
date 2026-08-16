@@ -1,4 +1,4 @@
-import { scroll } from '../lib/scroll'
+import { consumeScrolled } from '../lib/scroll'
 
 /**
  * Manipulation directe de la scène.
@@ -151,6 +151,10 @@ export function destroyInteraction() {
  * retour au cadrage d'origine dès que la page défile.
  */
 export function stepInteraction(dt) {
+  // La distance parcourue est consommée dans tous les cas, y compris pendant
+  // une prise en main : sans ça elle s'accumulerait et la scène se remettrait
+  // d'aplomb d'un coup au relâchement.
+  const scrolled = consumeScrolled()
   if (drag.active) return
 
   // Inertie : le geste se prolonge puis s'éteint.
@@ -160,11 +164,12 @@ export function stepInteraction(dt) {
   drag.vYaw *= friction
   drag.vPitch *= friction
 
-  // Reprise du défilement : la scène se remet d'aplomb, d'autant plus vite que
-  // l'on descend franchement.
-  const speed = Math.min(1, Math.abs(scroll.velocity) / 25)
-  if (speed > 0.02) {
-    const back = Math.exp(-2.6 * speed * dt * 60 * 0.016)
+  // Reprise du défilement : la scène se remet d'aplomb, à mesure de la distance
+  // parcourue et non de la vitesse. Environ un demi-écran suffit à effacer les
+  // deux tiers de la rotation — la chorégraphie récupère son cadrage sans que
+  // le retour se remarque.
+  if (scrolled > 0.5) {
+    const back = Math.exp(-scrolled / 420)
     drag.yaw *= back
     drag.pitch *= back
     drag.vYaw *= back

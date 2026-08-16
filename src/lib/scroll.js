@@ -17,8 +17,21 @@ export const scroll = {
   /** 0 → 1 sur le plan d'ouverture vidéo qui précède la séquence */
   intro: 0,
   velocity: 0,
+  /**
+   * Distance parcourue depuis la dernière lecture, en pixels.
+   * Une distance est déterministe, là où une vitesse est lissée et dépend du
+   * rythme d'images — ce qui rendait imprévisible tout ce qui s'appuyait dessus.
+   */
+  scrolled: 0,
   /** true tant que la séquence 3D est à l'écran (sert à couper le rendu GPU) */
   active: true,
+}
+
+/** Lit et remet à zéro la distance parcourue. */
+export function consumeScrolled() {
+  const d = scroll.scrolled
+  scroll.scrolled = 0
+  return d
 }
 
 let lenis = null
@@ -36,10 +49,14 @@ export function initScroll() {
     wheelMultiplier: 0.9,
   })
 
+  let previousY = window.scrollY || 0
+
   const update = () => {
     const el = document.getElementById('experience')
     if (!el) return
     const y = window.scrollY || window.pageYOffset
+    scroll.scrolled += Math.abs(y - previousY)
+    previousY = y
 
     // La progression est mesurée à partir du haut de la séquence, et non du
     // haut de la page : le plan d'ouverture vidéo la précède désormais, et un
