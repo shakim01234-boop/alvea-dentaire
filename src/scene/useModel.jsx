@@ -1,5 +1,6 @@
 import { Component, useEffect, useState, useMemo, Suspense } from 'react'
 import * as THREE from 'three'
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js'
 import { useGLTF } from '@react-three/drei'
 import { asset } from '../lib/asset'
 
@@ -55,7 +56,7 @@ export function useModelAvailable(url) {
   return available
 }
 
-function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
+function LoadedModel({ url, materialProps, fitHeight, smooth = true, onReady, ...props }) {
   // useDraco = false : le décodeur Draco est téléchargé depuis un CDN Google.
   // Les modèles sont compressés en meshopt, dont le décodeur est embarqué —
   // le site n'a ainsi aucune dépendance réseau externe.
@@ -63,6 +64,26 @@ function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
 
   const prepared = useMemo(() => {
     const root = scene.clone(true)
+
+    if (smooth) {
+      // Un maillage léger livré avec des normales par facette montre chaque
+      // triangle en gros plan : la dent apparaissait taillée à la serpe.
+      // On soude les sommets — les coutures d'uv, devenues inutiles puisque
+      // les textures sont écartées, empêchaient la soudure — puis on recalcule
+      // des normales moyennées. La silhouette reste ce qu'elle est, mais la
+      // lumière glisse au lieu de s'arrêter sur chaque face.
+      root.traverse((o) => {
+        if (!o.isMesh || !o.geometry) return
+        const geo = o.geometry
+        geo.deleteAttribute('uv')
+        geo.deleteAttribute('uv1')
+        geo.deleteAttribute('normal')
+        const merged = mergeVertices(geo)
+        merged.computeVertexNormals()
+        merged.computeBoundingSphere()
+        o.geometry = merged
+      })
+    }
 
     if (materialProps) {
       // La matière du fichier est remplacée, mais ses deux cartes utiles sont
@@ -110,7 +131,7 @@ function LoadedModel({ url, materialProps, fitHeight, onReady, ...props }) {
     }
 
     return root
-  }, [scene, materialProps, fitHeight])
+  }, [scene, materialProps, fitHeight, smooth])
 
   useEffect(() => {
     onReady?.(prepared)
@@ -153,7 +174,7 @@ class ModelBoundary extends Component {
   }
 }
 
-export function Model({ url, fallback, materialProps, fitHeight, onReady, ...props }) {
+export function Model({ url, fallback, materialProps, fitHeight, smooth, onReady, ...props }) {
   // Résolu ici plutôt qu'à l'appel : les composants de scène gardent des
   // chemins lisibles, et le sous-chemin de déploiement reste un détail.
   const resolved = asset(url)
@@ -166,6 +187,7 @@ export function Model({ url, fallback, materialProps, fitHeight, onReady, ...pro
           url={resolved}
           materialProps={materialProps}
           fitHeight={fitHeight}
+          smooth={smooth}
           onReady={onReady}
           {...props}
         />
