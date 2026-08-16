@@ -8,6 +8,7 @@ import { Model } from './useModel.jsx'
 import { enamelNormalMap } from './textures'
 import { range, scroll, window4 } from '../lib/scroll'
 import { THEMES, themeState } from '../lib/theme'
+import { destroyInteraction, drag, initInteraction, stepInteraction } from './interaction'
 
 /* ------------------------------------------------------------------ *
  * Repères de scène
@@ -575,6 +576,33 @@ function lerpLight(light, from, to, m) {
  * Caméra et post-traitement
  * ------------------------------------------------------------------ */
 
+/**
+ * Support de manipulation.
+ *
+ * La rotation de l'utilisateur s'applique à l'ensemble de la scène, et non à un
+ * objet en particulier : chaque acte a son propre sujet — la dent, l'arcade,
+ * l'implant, la gouttière — et il n'y aurait aucun sens à ce que la prise en
+ * main change de cible en cours de route.
+ */
+function Rig({ children }) {
+  const group = useRef()
+
+  useEffect(() => {
+    initInteraction()
+    return destroyInteraction
+  }, [])
+
+  useFrame((_, dt) => {
+    stepInteraction(dt)
+    const g = group.current
+    if (!g) return
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, drag.yaw, 12, dt)
+    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, drag.pitch, 12, dt)
+  })
+
+  return <group ref={group}>{children}</group>
+}
+
 function CameraRig() {
   const pos = useMemo(() => new THREE.Vector3(0, 0.05, 4), [])
   const look = useMemo(() => new THREE.Vector3(), [])
@@ -704,10 +732,12 @@ export default function Experience({ theme = 'dark' }) {
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <Stage themeName={theme} />
       <CameraRig />
-      <HeroTooth />
-      <Arch />
-      <Implant />
-      <Aligner />
+      <Rig>
+        <HeroTooth />
+        <Arch />
+        <Implant />
+        <Aligner />
+      </Rig>
       {fx !== 'off' && <Effects quality={quality} themeName={theme} />}
     </Canvas>
   )

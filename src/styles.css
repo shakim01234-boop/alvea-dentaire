@@ -813,6 +813,35 @@ a {
   font-style: italic;
 }
 
+/* Indication de manipulation : présente, jamais insistante. */
+.act-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 2.2rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.9s var(--ease) 0.7s,
+    transform 0.9s var(--ease) 0.7s;
+}
+
+.act-hint::before {
+  content: '';
+  width: 1.6rem;
+  height: 1px;
+  background: currentColor;
+}
+
+.act-body[data-state='in'] .act-hint {
+  opacity: 1;
+  transform: none;
+}
+
 /* ---------------------------------------------------------------- *
  * Partie éditoriale — opaque, elle recouvre le canvas
  * ---------------------------------------------------------------- */

@@ -19,6 +19,8 @@ export const ACTS = [
     kicker: '00 — Le principe',
     title: ["Une dent n'est pas", 'une pièce détachée.'],
     body: "Dentisterie restauratrice, implantologie et orthodontie de l'adulte. Douze praticiens et prothésistes sous le même toit, un seul plan de traitement.",
+    // Sans cette ligne, personne ne devine que la scène se manipule.
+    hint: 'Glissez pour faire tourner',
   },
   {
     id: 'diagnostic',

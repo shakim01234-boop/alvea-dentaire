@@ -88,6 +88,7 @@ export default function App() {
                   <span className="kicker">{typo(act.kicker)}</span>
                   <LineReveal as="h2" lines={act.title} active={on} delay={0.06} />
                   <WordReveal text={act.body} active={on} delay={0.28} />
+                  {act.hint && <span className="act-hint">{typo(act.hint)}</span>}
                 </div>
               </section>
             )
